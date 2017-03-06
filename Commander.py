@@ -140,6 +140,14 @@ class CommanderClass(lxu.command.BasicCommand):
         a try/except statement with traceback, so you don't need to add that."""
         pass
 
+    def commander_query(self, arg_index):
+        """To be overridden by subclasses.
+        Should return a value based on the arg_index being queried. For toggle
+        buttons and checkmarks, this should be a boolean. Can also return strings
+        or floats as required."""
+
+        return False
+
     @classmethod
     def commander_default_values_init(cls):
         """Initialize the class variable _commander_stored_values.
@@ -362,25 +370,47 @@ class CommanderClass(lxu.command.BasicCommand):
         except:
             lx.out(traceback.format_exc())
 
-    def cmd_Query(self,index,vaQuery):
-        """Returns a value when a queriable argument is queried. If the argument
-        is queriable, is not a Form Command List, and has a recent value, the query
-        will return the most recent value.
+    def cmd_Query(self, index, vaQuery):
+        """Returns a value when a queriable argument is queried. It's a bit weird
+        to use, so commander wraps it up for you. Implement `commander_query` in
+        your own sublcass to and return whatever you like based on the arg_index.
 
         You should never need to touch this."""
 
+        # Create the ValueArray object
         va = lx.object.ValueArray()
         va.set(vaQuery)
 
         args = self.commander_arguments()
 
-        if index < len(args):
-            is_query = 'query' in args[index].get(FLAGS, [])
-            is_not_fcl = args[index].get(VALUES_LIST_TYPE) != FCL
-            has_recent_value = self._commander_stored_values[index]
+        # If index out of range, bail
+        if index > len(args):
+            return lx.result.OK
 
-            if is_query and is_not_fcl and has_recent_value:
-                va.AddString(has_recent_value)
+        # If it's not a query, bail
+        is_query = 'query' in args[index].get(FLAGS, [])
+        if not is_query:
+            return lx.result.OK
+
+        # If it's a Form Command List (FCL), bail
+        is_fcl = args[index].get(VALUES_LIST_TYPE) == FCL
+        if is_fcl:
+            return lx.result.OK
+
+        # To keep things simpler for commander users, let them return
+        # a value using only an index (no ValueArray nonsense)
+        commander_query_result = self.commander_query(index)
+
+        # Need to add the proper datatype based on result from commander_query
+
+        if isinstance(commander_query_result, basestring):
+            va.AddString(commander_query_result)
+
+        elif isinstance(commander_query_result, int):
+            va.AddInt(commander_query_result)
+
+        elif isinstance(commander_query_result, float):
+            va.AddFloat(commander_query_result)
 
         return lx.result.OK
 

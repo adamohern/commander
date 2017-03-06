@@ -52,14 +52,12 @@ class CommandClass(commander.CommanderClass):
       {
         'name': 'dish_1',
         'datatype': 'string',
-        'label': 'First Dish',
         'default': 'bacon',
         'values_list_type': 'popup',
         'values_list': ['bacon', 'quinoa']
       }, {
         'name': 'dish_2',
         'datatype': 'string',
-        'label': 'Second Dish',
         'default': 'eggs',
         'values_list_type': 'sPresetText'
         'values_list': ['eggs', 'kale']
@@ -143,7 +141,6 @@ class CommandClass(commander.CommanderClass):
         return [
                 {
                     'name': 'myGreatQuery',
-                    'label': 'Query This',
                     'datatype': 'integer',
                     'default': '',
                     'values_list_type': 'fcl'
@@ -154,6 +151,72 @@ class CommandClass(commander.CommanderClass):
 
     def commander_notifiers(self):
         return [("select.event", "polygon +ldt"),("select.event", "item +ldt")]
+
+lx.bless(CommandClass, CMD_NAME)
+```
+
+Speaking of the `query` flag, you can of course use it to query data within a command.
+
+A common use-case would be a toggle button. The cleanest way is to have two separate arguments: one for the toggle mode, and another to query a boolean. You'll need to store a persistent state, of course, so we use a class variable.
+
+Observe.
+
+```python
+class CommandClass(commander.CommanderClass):
+
+    # This class variable stores our current toggle state.
+    _state = False
+
+    # Define two separate arguments: one for what we want to do when the command
+    # is clicked in a toolbar, and the second is a query for displaying the current
+    # toggle state.
+    def commander_arguments(self):
+        return [
+                {
+                    'name': 'mode',
+                    'datatype': 'integer',
+                    'default': 'toggle',
+                    'values_list_type': 'popup'
+                    'values_list': ['toggle', 'on', 'off']
+                }, {
+                    'name': 'query_me',
+                    'datatype': 'boolean',
+                    'default': 0,
+                    'flags': ['query', 'optional']
+                }
+            ]
+
+    # If you're not familiar with the @classmethod decorator and how it relates
+    # to class variables, it'd be worth your time to do some reading.
+    # In this case, we set the _state variable not just for the current object,
+    # but for all objects of the current class.
+    @classmethod
+    def set_state(cls, value):
+        cls._state = value
+
+    def commander_execute(self):
+        # In addition to `commander_args()`, we can get a specific arg value
+        # by index using `commander_arg_value(index)`. Just for funsies.
+        mode = self.commander_arg_value(0)
+
+        if mode == 'on':
+            # If on, toggle True
+            self.set_state(True)
+
+        elif mode == 'off':
+            # If off, toggle False
+            self.set_state(False)
+
+        else:
+            # Otherwise toggle the value
+            state = False if self._state else True
+            self.set_state(state)
+
+    def commander_query(self, arg_index):
+        # This just returns the query value based on the index of the argument
+        # being queried. Our query arg is the second one in the list, so:
+        if arg_index == 1:
+            return self._state
 
 lx.bless(CommandClass, CMD_NAME)
 ```
