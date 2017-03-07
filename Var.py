@@ -55,3 +55,5 @@ sTYPE_INTEGERs = [
 sTYPE_BOOLEANs = [
         'boolean'
     ]
+
+DATATYPES = sTYPE_FLOATs + sTYPE_STRINGs + sTYPE_STRING_vectors + sTYPE_INTEGERs + sTYPE_BOOLEANs
