@@ -177,25 +177,30 @@ class CommanderClass(lxu.command.BasicCommand):
         if not self.dyna_IsSet(index):
             return default
 
+        if 'variable' in self.commander_arguments()[index].get(FLAGS, []):
+            datatype = self.basic_ArgType(index)
+        else:
+            datatype = self.commander_arguments()[index][DATATYPE].lower()
+            
         # If it's a string, use dyna_String to grab it.
-        if self.commander_arguments()[index][DATATYPE].lower() in sTYPE_STRINGs:
+        if datatype in sTYPE_STRINGs:
             return self.dyna_String(index)
 
         # If the value is a vector, use dyna_String to grab it, then parse it
         # into a list of float vlues.
-        elif self.commander_arguments()[index][DATATYPE].lower() in sTYPE_STRING_vectors:
+        elif datatype in sTYPE_STRING_vectors:
             return [float(i) for i in self.dyna_String(index).split(" ")]
 
         # If the value is an integer, use dyna_Int to grab it.
-        elif self.commander_arguments()[index][DATATYPE].lower() in sTYPE_INTEGERs:
+        elif datatype in sTYPE_INTEGERs:
             return self.dyna_Int(index)
 
         # If the value is a float, use dyna_Float to grab it.
-        elif self.commander_arguments()[index][DATATYPE].lower in sTYPE_FLOATs:
+        elif datatype in sTYPE_FLOATs:
             return self.dyna_Float(index)
 
         # If the value is a boolean, use dyna_Bool to grab it.
-        elif self.commander_arguments()[index][DATATYPE].lower() in sTYPE_BOOLEANs:
+        elif datatype in sTYPE_BOOLEANs:
             return self.dyna_Bool(index)
 
         # If something bonkers is going on, use the default.
